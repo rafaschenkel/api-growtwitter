@@ -4,9 +4,13 @@ import { ResultDto } from "../dtos/result.dto";
 import { UserDto } from "../dtos/user.dto";
 import User from "../model/user.model";
 import { AppError } from "../model/appError";
+import { CreateUserDto } from "../dtos/createUser.dto";
+import { hashPassword } from "../utils/hashPassword.utils";
 
 class UserService {
-  public async create(user: User): Promise<ResultDto<UserDto>> {
+  public async create(data: CreateUserDto): Promise<ResultDto<UserDto>> {
+    const hashedPassword = await hashPassword(data.password);
+    const user = new User(data.username, data.email, hashedPassword);
     const result = await repository.user.create({ data: user.toJSON(), omit: { password: true } });
 
     return {
