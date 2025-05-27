@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { Response } from "express";
-import { AppError } from "../model/userError";
+import { AppError } from "../model/appError";
 
 export function handlerError(error: Error, res: Response) {
   let result;

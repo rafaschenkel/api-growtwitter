@@ -3,7 +3,7 @@ import { FollowingDto, FollowerDto } from "../dtos/follow.dto";
 import { ResultDto } from "../dtos/result.dto";
 import { UserDto } from "../dtos/user.dto";
 import User from "../model/user.model";
-import { AppError } from "../model/userError";
+import { AppError } from "../model/appError";
 
 class UserService {
   public async create(user: User): Promise<ResultDto<UserDto>> {
