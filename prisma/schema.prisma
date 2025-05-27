@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique @map("username")
+  email     String   @unique @map("email")
+  password  String   @map("password")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tweets    Tweet[]
+  likes     TweetLike[]
+  followers Follow[]    @relation("FollowedBy")
+  following Follow[]    @relation("Following")
+
+  @@map("users")
+}
+
+model Tweet {
+  id            String   @id @default(uuid())
+  content       String   @map("content")
+  createdAt     DateTime @default(now()) @map("created_at")
+  userId        String   @map("user_id")
+  parentTweetId String?  @map("parent_tweet_id")
+
+  user        User        @relation(fields: [userId], references: [id])
+  parentTweet Tweet?      @relation("ReplyTo", fields: [parentTweetId], references: [id])
+  replies     Tweet[]     @relation("ReplyTo")
+  likes       TweetLike[]
+
+  @@map("tweets")
+}
+
+model TweetLike {
+  userId  String   @map("user_id")
+  tweetId String   @map("tweet_id")
+  likedAt DateTime @default(now()) @map("liked_at")
+
+  user  User  @relation(fields: [userId], references: [id])
+  tweet Tweet @relation(fields: [tweetId], references: [id])
+
+  @@id([userId, tweetId])
+  @@map("tweet_likes")
+}
+
+model Follow {
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  followedAt  DateTime @default(now()) @map("followed_at")
+
+  follower  User @relation("Following", fields: [followerId], references: [id])
+  following User @relation("FollowedBy", fields: [followingId], references: [id])
+
+  @@id([followerId, followingId])
+  @@map("follows")
+}
