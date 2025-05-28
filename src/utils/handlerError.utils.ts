@@ -7,7 +7,7 @@ export function handlerError(error: Error, res: Response) {
 
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     result = {
-      code: Number(error.code),
+      code: 500,
       message: error.message,
     };
   } else if (error instanceof Prisma.PrismaClientValidationError) {
