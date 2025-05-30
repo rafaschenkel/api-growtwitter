@@ -1,4 +1,4 @@
-import { UserDto } from "./user.dto";
+import { UserDto } from "./userCreated.dto";
 
 export interface LoginDto {
   login: string;

@@ -1,7 +1,8 @@
-export interface CreateUserDto {
+export interface UserCreatedDto {
+  id: string;
   name: string;
   username: string;
   email: string;
-  password: string;
   imgUrl: string | null;
+  createdAt: Date;
 }

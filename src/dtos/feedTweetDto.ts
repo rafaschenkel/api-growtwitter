@@ -1,4 +1,4 @@
-export interface TweetDto {
+export interface FeedTweetDto {
   id: string;
   createdAt: Date;
   userId: string;
@@ -14,5 +14,4 @@ export interface TweetDto {
     likes: number;
     replies: number;
   };
-  replies?: TweetDto[];
 }
