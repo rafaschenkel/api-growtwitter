@@ -1,18 +1,35 @@
 import { Router } from "express";
 import userController from "../controllers/user.controller";
 import { authMiddleware } from "../middlewares/auth.middleware";
+import { validateLoginMiddleware } from "../middlewares/validateLogin.middleware";
+import { validateCreateUserMiddleware } from "../middlewares/validateCreateUser.middleware";
+import { checkBodyEmptyMiddleware } from "../middlewares/checkBodyEmpty.middleware";
+import { validateUUIDParamMiddleware } from "../middlewares/validateUUIDParam.middleware";
+import { checkFollowMiddleware } from "../middlewares/checkFollow.middleware";
 
 const userRoutes = Router();
 
-userRoutes.post("/", userController.create);
-userRoutes.post("/login", userController.login);
-userRoutes.get("/followingTweets", authMiddleware, userController.listFollowingTweets);
+userRoutes.get("/feed", authMiddleware, userController.listUserFeedTweets);
 
-userRoutes.get("/:userId", userController.getUser);
-userRoutes.get("/:userId/followings", userController.listFollowings);
-userRoutes.get("/:userId/followers", userController.listFollowers);
+userRoutes.get("/:userId", authMiddleware, validateUUIDParamMiddleware("userId"), userController.getUser);
 
-userRoutes.post("/follow/:followingId", authMiddleware, userController.follow);
-userRoutes.delete("/unfollow/:followingId", authMiddleware, userController.unfollow);
+userRoutes.post(
+  "/follow/:followingId",
+  authMiddleware,
+  validateUUIDParamMiddleware("followingId"),
+  checkFollowMiddleware,
+  userController.follow
+);
+userRoutes.delete(
+  "/unfollow/:followingId",
+  authMiddleware,
+  validateUUIDParamMiddleware("followingId"),
+  checkFollowMiddleware,
+  userController.unfollow
+);
+
+userRoutes.use(checkBodyEmptyMiddleware);
+userRoutes.post("/", validateCreateUserMiddleware, userController.create);
+userRoutes.post("/login", validateLoginMiddleware, userController.login);
 
 export default userRoutes;
