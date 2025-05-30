@@ -4,7 +4,10 @@
   "description": "API do GrowTwitter, projeto full stack II da formação desenvolvimento web full stack da Growdev.",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn ./src/index.ts"
+    "dev": "ts-node-dev --respawn ./src/index.ts",
+    "build": "tsc",
+    "start": "node ./dist/index.js",
+    "postinstall": "npm run build"
   },
   "author": "Rafael Schenkel de Souza",
   "license": "ISC",
