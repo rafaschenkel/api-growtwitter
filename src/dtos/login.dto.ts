@@ -1,4 +1,4 @@
-import { UserDto } from "./userCreated.dto";
+import { UserCreatedDto } from "./userCreated.dto";
 
 export interface LoginDto {
   login: string;
@@ -7,5 +7,5 @@ export interface LoginDto {
 
 export interface LoginResponseDto {
   token: string;
-  user: UserDto;
+  user: UserCreatedDto;
 }
