@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import userService from "../services/user.service";
-import User from "../model/user.model";
 import { handlerError } from "../utils/handlerError.utils";
 import { CreateUserDto } from "../dtos/createUser.dto";
 import { LoginDto } from "../dtos/login.dto";
@@ -17,8 +16,8 @@ class UserController {
   }
   public async create(req: Request, res: Response) {
     try {
-      const { username, email, password } = req.body;
-      const user: CreateUserDto = { username, email, password };
+      const { name, username, email, password, imgUrl }: CreateUserDto = req.body;
+      const user: CreateUserDto = { name, username, email, password, imgUrl };
       const result = await userService.create(user);
       res.status(result.code).send(result);
     } catch (error: any) {
@@ -37,30 +36,10 @@ class UserController {
     }
   }
 
-  public async listFollowings(req: Request, res: Response) {
-    try {
-      const { userId } = req.params;
-      const result = await userService.listFollowings(userId);
-      res.status(result.code).send(result);
-    } catch (error: any) {
-      handlerError(error, res);
-    }
-  }
-
-  public async listFollowers(req: Request, res: Response) {
-    try {
-      const { userId } = req.params;
-      const result = await userService.listFollowers(userId);
-      res.status(result.code).send(result);
-    } catch (error: any) {
-      handlerError(error, res);
-    }
-  }
-
-  public async listFollowingTweets(req: Request, res: Response) {
+  public async listUserFeedTweets(req: Request, res: Response) {
     try {
       const userId = req.userId;
-      const result = await userService.listFollowingTweets(userId);
+      const result = await userService.listUserFeedTweets(userId);
       res.status(result.code).send(result);
     } catch (error: any) {
       handlerError(error, res);
