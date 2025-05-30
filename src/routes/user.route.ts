@@ -21,7 +21,7 @@ userRoutes.post(
   userController.follow
 );
 userRoutes.delete(
-  "/unfollow/:followingId",
+  "/follow/:followingId",
   authMiddleware,
   validateUUIDParamMiddleware("followingId"),
   checkFollowMiddleware,

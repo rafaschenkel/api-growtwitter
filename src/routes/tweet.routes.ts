@@ -11,7 +11,7 @@ tweetRoutes.get("/:tweetId", authMiddleware, validateUUIDParamMiddleware("tweetI
 
 tweetRoutes.post("/:tweetId/like", authMiddleware, validateUUIDParamMiddleware("tweetId"), tweetController.likeTweet);
 tweetRoutes.delete(
-  "/:tweetId/dislike",
+  "/:tweetId/like",
   authMiddleware,
   validateUUIDParamMiddleware("tweetId"),
   tweetController.dislikeTweet
