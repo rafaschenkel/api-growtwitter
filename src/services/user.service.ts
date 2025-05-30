@@ -1,15 +1,15 @@
 import { repository } from "../database/prismaClient";
-import { FollowingDto, FollowerDto } from "../dtos/follow.dto";
 import { ResultDto } from "../dtos/result.dto";
-import { UserDto } from "../dtos/user.dto";
+import { UserCreatedDto } from "../dtos/userCreated.dto";
 import User from "../model/user.model";
-import { AppError } from "../model/appError";
+import { AppError } from "../model/appError.model";
 import { CreateUserDto } from "../dtos/createUser.dto";
 import { hashPassword } from "../utils/hashPassword.utils";
 import jwt, { SignOptions } from "jsonwebtoken";
 import { comparePassword } from "../utils/comparePassword.utils";
 import { LoginDto, LoginResponseDto } from "../dtos/login.dto";
-import { TweetDto } from "../dtos/tweet.dto";
+import { FeedTweetDto } from "../dtos/feedTweetDto";
+import { UserDto } from "../dtos/user.dto";
 
 class UserService {
   public async login(data: LoginDto): Promise<ResultDto<LoginResponseDto>> {
@@ -28,17 +28,22 @@ class UserService {
 
     const { password, ...userWithoutPassword } = user;
     return {
+      success: true,
       code: 200,
       message: "User successfully logged in",
       data: { token, user: userWithoutPassword },
     };
   }
-  public async create(data: CreateUserDto): Promise<ResultDto<UserDto>> {
+  public async create(data: CreateUserDto): Promise<ResultDto<UserCreatedDto>> {
     const hashedPassword = await hashPassword(data.password);
-    const user = new User(data.username, data.email, hashedPassword);
-    const result = await repository.user.create({ data: user.toJSON(), omit: { password: true } });
+    const user = new User(data.name, data.username, data.email, hashedPassword, data.imgUrl);
+    const result = await repository.user.create({
+      data: user.toJSON(),
+      select: { id: true, name: true, username: true, email: true, imgUrl: true, createdAt: true },
+    });
 
     return {
+      success: true,
       code: 201,
       message: "User successfully created",
       data: result,
@@ -48,71 +53,68 @@ class UserService {
   public async getUser(userId: string): Promise<ResultDto<UserDto>> {
     const result = await repository.user.findUnique({
       where: { id: userId },
-      omit: { password: true },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        email: true,
+        imgUrl: true,
+        createdAt: true,
         _count: { select: { tweets: true, following: true, followers: true } },
+        tweets: {
+          include: {
+            _count: { select: { likes: true, replies: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        followers: {
+          select: { follower: { select: { id: true, name: true, username: true, imgUrl: true } } },
+          orderBy: { followedAt: "desc" },
+        },
+        following: {
+          select: { following: { select: { id: true, name: true, username: true, imgUrl: true } } },
+          orderBy: { followedAt: "desc" },
+        },
       },
     });
 
     if (!result) throw new AppError(404, "User not found");
 
     return {
+      success: true,
       code: 200,
       message: "User successfully retrieved",
       data: result,
     };
   }
 
-  public async listFollowings(userId: string): Promise<ResultDto<FollowingDto[]>> {
-    const result = await repository.follow.findMany({
+  public async listUserFeedTweets(userId: string): Promise<ResultDto<FeedTweetDto[]>> {
+    const following = await repository.follow.findMany({
       where: { followerId: userId },
-      select: { following: { select: { id: true, username: true } } },
+      select: { followingId: true },
     });
 
-    if (result.length === 0) throw new AppError(404, "This user does not follow anyone");
+    const followingIds = following.map((follow) => follow.followingId);
+    followingIds.push(userId);
 
-    return {
-      code: 200,
-      message: "Followings successfully retrieved",
-      data: result,
-    };
-  }
-
-  public async listFollowers(userId: string): Promise<ResultDto<FollowerDto[]>> {
-    const result = await repository.follow.findMany({
-      where: { followingId: userId },
-      select: {
-        follower: {
-          select: { id: true, username: true, _count: { select: { following: true, followers: true, tweets: true } } },
-        },
+    const tweets = await repository.tweet.findMany({
+      where: { userId: { in: followingIds } },
+      include: {
+        user: { select: { id: true, name: true, username: true, imgUrl: true } },
+        _count: { select: { likes: true, replies: true } },
       },
+      orderBy: { createdAt: "desc" },
     });
 
-    if (result.length === 0) throw new AppError(404, "This user has no followers");
-
     return {
+      success: true,
       code: 200,
-      message: "Followers successfully retrieved",
-      data: result,
-    };
-  }
-
-  public async listFollowingTweets(userId: string): Promise<ResultDto<TweetDto[]>> {
-    const result = await repository.follow.findMany({
-      where: { followerId: userId },
-      select: { following: { select: { tweets: { include: { user: { select: { id: true, username: true } } } } } } },
-    });
-
-    const tweets = result.flatMap((follow) => follow.following.tweets);
-
-    return {
-      code: 200,
-      message: "Following tweets successfully retrieved",
+      message: "Feed tweets successfully retrieved",
       data: tweets,
     };
   }
 
-  public async follow(userId: string, followingId: string) {
+  public async follow(userId: string, followingId: string): Promise<ResultDto> {
     const existingFollow = await repository.follow.findUnique({
       where: { followerId_followingId: { followerId: userId, followingId: followingId } },
     });
@@ -123,12 +125,13 @@ class UserService {
       data: { followerId: userId, followingId: followingId },
     });
     return {
+      success: true,
       code: 200,
       message: "User successfully followed",
     };
   }
 
-  public async unfollow(userId: string, followingId: string) {
+  public async unfollow(userId: string, followingId: string): Promise<ResultDto> {
     const existingFollow = await repository.follow.findUnique({
       where: { followerId_followingId: { followerId: userId, followingId: followingId } },
     });
@@ -140,6 +143,7 @@ class UserService {
     });
 
     return {
+      success: true,
       code: 200,
       message: "User successfully unfollowed",
     };
